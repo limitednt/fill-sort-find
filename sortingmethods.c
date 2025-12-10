@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
-#include<time.h>
+#include<windows.h>
 
 #define GREY "\033[90m"
 #define RED "\033[0;31m"
@@ -17,6 +17,59 @@ void random_fill(int n, int arr[n],int b){
         int num=rand()%(b+1);
         printf(GREY"number generated!:(%d) \n" WHITE,num);
         arr[i]=num;
+    }
+}
+int partition(int n,int arr[n],int low,int high){
+ int p=arr[low];
+ int i=low;
+ int j=high;
+    while (i<j){
+        while (arr[i]<=p && i<high){
+            i++;
+        }
+        while (arr[j]>p){
+            j--;
+        }
+        if (i<j){
+            swap(&arr[i],&arr[j]);
+        }
+    }   
+    swap(&arr[low],&arr[j]);
+    return j;
+}
+void merge(int arr[],int l,int m, int r){
+    int i,j,k;
+    int n1=m-l+1;
+    int n2=r-m;
+    int L[n1],R[n2];
+    for (i=0;i<n1;i++){
+        L[i]=arr[l+i];
+    }
+    for (j=0;j<n2;j++){
+        R[j]=arr[m+1+j];
+    }
+    i=0;
+    j=0;
+    k=l;
+    while (i<n1 && j<n2){
+        if (L[i]<=R[j]){
+            arr[k]=L[i];
+            i++;
+        }else{
+            arr[k]=R[j];
+            j++;
+        }
+        k++;
+    }
+    while (i<n1){
+        arr[k]=L[i];
+        i++;
+        k++;
+    }
+    while (j<n2){
+        arr[k]=R[j];
+        j++;
+        k++;
     }
 }
 void sort_bubble(int n, int arr[n]){
@@ -54,61 +107,22 @@ void sort_insertion(int n, int arr[n]){
         arr[j+1]=key;
     }
 }
-void dividenconquer_sort(int n,int arr[n]){
-    //this is just a test function to understand how to implement divide and conquer algorithms(thanks copilot)
-    //so ill use as many notes as i want
-    int mid,left,right,mid2;
-    bool sorted=false;
-    int *TARR1;
-    int *TARR2;
-    //this suction is just for deviding the array into two halves
-    if (n % 2 == 0){
-        mid=n/2;
-        mid2=mid;
-        TARR1=(int *)malloc(mid*sizeof(int));
-        TARR2=(int *)malloc(mid2*sizeof(int));
-        printf("%d",mid);
-    }else{
-        mid=(n/2)+1;
-        mid2=mid-1;
-        TARR1=(int *)malloc(mid*sizeof(int));
-        TARR2=(int *)malloc(mid2*sizeof(int));
-        printf("%d",mid);
+void merge_sort(int n,int arr[n],int l,int r){
+    if (l<r){
+        int m=l+(r-l)/2;
+        merge_sort(n,arr,l,m);
+        merge_sort(n,arr,m+1,r);
+        merge(arr,l,m,r);
     }
-    //------------------------------------------
-    //this one for filling the two temporary arrays and sorting them
-    for(int i = 0;i<mid;i++){
-        TARR1[i]=arr[i];
+}
+void quicksort(int n,int arr[n]){
+    int low=0;
+    int high=n-1;
+    if (low<high){
+        int pi=partition(n,arr,low,high);
+        quicksort(pi,arr);
+        quicksort(n-pi-1,&arr[pi+1]);
     }
-    for (int j=0;j<mid2;j++){
-        TARR2[j]=arr[mid2+j];
-    }
-    //wished to use qucik sort, didnt make a function for it, too bad!
-    sort_insertion(mid,TARR1);
-    sort_insertion(mid2,TARR2);
-    while(sorted==false){
-        left=0;
-        right=0;
-        for(int k=0;k<n;k++){
-            if (left<mid && right<mid2){
-                if (TARR1[left]<TARR2[right]){
-                    arr[k]=TARR1[left];
-                    left++;
-                }else{
-                    arr[k]=TARR2[right];
-                    right++;
-                }
-            }else if (left<mid){
-                arr[k]=TARR1[left];
-                left++;
-            }else if (right<mid2){
-                arr[k]=TARR2[right];
-                right++;
-            }
-        }
-        sorted=true;
-    }
-
 }
 void display(int n,int arr[n]){
     for (int i=0;i<n;i++){
@@ -118,13 +132,14 @@ void display(int n,int arr[n]){
 }
 
 int main(){
+    LARGE_INTEGER start, end, freq;
     int n,check,a,b;
     FILE *pFILE=fopen("output.txt","w");
     printf(RED"this is a sorting library, it fills and sorts!\n"WHITE);
     printf("choose the sorting algorithm you desire: \n");
-    printf("1: bubble sort\n2: selection sort\n3: insertion sort\n4: divide and conquer sort\n");
+    printf("1: bubble sort\n2: selection sort\n3: insertion sort\n4: merge sort\n5: quicksort\n");
     scanf("%d",&check);
-    while (check<=0 || check>4){
+    while (check<=0 || check>5){
         printf(RED"please sellect a valid input"WHITE);
         scanf("%d",&check);
     }
@@ -136,39 +151,62 @@ int main(){
     random_fill(n,arr,b);
     switch (check){
         case 1:{
-            clock_t start=clock();
+            QueryPerformanceFrequency(&freq);
+            QueryPerformanceCounter(&start);
             sort_bubble(n,arr);
-            clock_t end=clock();
-            double time_taken=((double)(end-start))/CLOCKS_PER_SEC;
-            printf("bubble sort took %f seconds\n",time_taken);
+            QueryPerformanceCounter(&end);
+            double time_taken = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
+            display(n,arr);
+            printf(RED"\nTime: %.9f seconds\n"WHITE, time_taken);
             }
         break;
         case 2: {
-            clock_t start=clock();
+            QueryPerformanceFrequency(&freq);
+            QueryPerformanceCounter(&start);
             sort_selection(n,arr);        
-            clock_t end=clock();
-            double time_taken=((double)(end-start))/CLOCKS_PER_SEC;
-            printf("selection sort took %f seconds\n",time_taken);
+            QueryPerformanceCounter(&end);
+            double time_taken = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
+            display(n,arr);
+            printf(RED"\nTime: %.9f seconds\n"WHITE, time_taken);
             }
         break;
         case 3:{
-            clock_t start=clock();
+            QueryPerformanceFrequency(&freq);
+            QueryPerformanceCounter(&start);
             sort_insertion(n,arr);
-            clock_t end=clock();
-            double time_taken=((double)(end-start))/CLOCKS_PER_SEC;
-            printf("insertion sort took %f seconds\n",time_taken);
+            QueryPerformanceCounter(&end);
+            double time_taken = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
+            display(n,arr);
+            printf(RED"\nTime: %.9f seconds\n"WHITE, time_taken);
             }
         break;
         case 4:{
-            clock_t start=clock();
-            dividenconquer_sort(n,arr);
-            clock_t end=clock();
-            double time_taken=((double)(end-start))/CLOCKS_PER_SEC;
-            printf("divide and conquer sort took %f seconds\n",time_taken);
+            printf("mergesort started...\n");
+            QueryPerformanceFrequency(&freq);
+            QueryPerformanceCounter(&start);
+            merge_sort(n,arr,0,n-1);
+
+            QueryPerformanceCounter(&end);
+            double time_taken = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
+            display(n,arr);
+            printf(RED"\nTime: %.9f seconds\n"WHITE, time_taken);
         }
         break;
+        case 5:{
+            QueryPerformanceFrequency(&freq);
+            QueryPerformanceCounter(&start);
+            quicksort(n,arr);
+            QueryPerformanceCounter(&end);
+            double time_taken = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
+            display(n,arr);
+            printf(RED"\nTime: %.9f seconds\n"WHITE, time_taken);
+        }
+        break;
+
     }
-    display(n,arr);
+
+
+
     if (pFILE==NULL){
         printf(RED"error opening file,too bad!\n"WHITE);
         fclose(pFILE);
